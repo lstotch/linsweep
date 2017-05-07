@@ -3,7 +3,7 @@
     "name": "Simple Linear Sweep",
     "type": ["core", "ui", "architecture", "binaryview"],
     "api": "python2",
-    "description": "Uses simplistic techniques to identify additional function",
+    "description": "Uses simplistic techniques to identify additional functions for x86 and x86_64 binaries.",
     "longdescription": "This plugin aims to provide a temporary solution until a proper linear sweep is included. Millage will vary.",
     "license": {
       "name": "MIT",
@@ -14,8 +14,8 @@
     "version": "1.0 alpha",
     "author": "butters",
     "minimumBinaryNinjaVersion": {
-      "dev": "1.0.dev-729",
-      "release": "9999"
-    }
+			"release (Personal)": "1.0.dev-729",
+			"release (Commercial)": "1.0.dev-729"
+		}
   }
 }
