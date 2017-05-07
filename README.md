@@ -1,7 +1,7 @@
-# Simple Linear Sweep
+# Simple Linear Sweep for BinaryNinja
 Author: **butters**
 
-_A simple linear sweep._
+_A simple linear sweep for x86 and x86_64._
 
 ## Description:
 
@@ -16,7 +16,7 @@ To install this plugin, navigate to your Binary Ninja plugins directory, and run
 This plugin requires the following minimum version of Binary Ninja:
 
  * release (Commercial) - 1.0.729-dev
- * release (Personal) - unk
+ * release (Personal) - 1.0.729-dev
 
 ## License
 

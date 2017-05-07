@@ -2,9 +2,10 @@ import logging
 from binaryninja import *
 
 logging.disable(logging.WARNING)
+supported_archs = ['x86', 'x86_64']
 alignment = ["\xcc", "\xc3"]
-suggestions = ["\x64\x48\x8b", "\x55\x8b\xec", "\x8b\xff\x56", "\x8b\xff\x55", "\xff\x25", "\x48\x8b\xc4"]
-MIN_PRO_COUNT = 10
+suggestions = ["\x64\x48\x8b", "\x8b\xff\x56", "\x8b\xff\x55", "\xff\x25", "\x48\x8b\xc4", "\x48\x83\xec", "\x48\x81\xec"]
+MIN_PRO_COUNT = 8
 MIN_IL = 10
 
 
@@ -43,7 +44,7 @@ def find_functions(bv, br, tgt, post=False):
                 else:
                     cur += len(tgt)
                     break
-        if bv.get_function_at(cur) is None:
+        if bv.get_basic_blocks_at(cur) == []:
             bv.add_function(cur)
             f = bv.get_function_at(cur)
             if f.name[0:4] == 'sub_':
@@ -55,10 +56,13 @@ def find_functions(bv, br, tgt, post=False):
 
 
 def sweep(bv):
+    if bv.arch.name not in supported_archs:
+        print "Arch not supported: %s" % bv.arch.name
+        return
     fs = len(bv.functions)
     br = BinaryReader(bv)
     pros = model(bv, br)
-    find_functions(bv, br, "\xcc"*4, True)
+    find_functions(bv, br, "\xcc"*2, True)
     for prologue in pros:
         find_functions(bv, br, prologue)
     print("Totals: Created %d new functions" % (len(bv.functions) - fs))
