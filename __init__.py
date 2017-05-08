@@ -5,7 +5,17 @@ from binaryninja import *
 logging.disable(logging.WARNING)
 supported_archs = ['x86', 'x86_64']
 alignment = ["\xcc", "\xc3"]
-suggestions = ["\x64\x48\x8b", "\x8b\xff\x56", "\x8b\xff\x55", "\xff\x25", "\x48\x8b\xc4", "\x48\x83\xec", "\x48\x81\xec"]
+suggestions = ["\x55\x8b\xec",
+               "\x40\x55\x48\x83\xec",
+               "\x64\x48\x8b",
+               "\x8b\xff\x56",
+               "\x8b\xff\x55",
+               "\xff\x25",
+               "\x48\x8b\xc4",
+               "\x48\x83\xec",
+               "\x48\x81\xec",
+               "\x8b\x54\x24\x04",
+               "\x8b\x4c\x24\x04"]
 MIN_PRO_COUNT = 8
 MIN_IL = 10
 CAUTIOUS = 0
@@ -32,48 +42,69 @@ def model(bv, br):
     return ret
 
 
-def find_functions(bv, br, tgt, post=False):
-    cur = bv.find_next_data(bv.start, tgt)
+def search(bv, br, align, pro, start, end, apnd=''):
+    tgt = align + pro
+    cur = bv.find_next_data(start, tgt)
     funcs = len(bv.functions)
     while cur:
-        if post:
+        if pro == '':
             while True:
-                br.seek(cur + 1)
-                if br.read(len(tgt)) == tgt:
-                    cur += 1
-                else:
-                    cur += len(tgt)
+                n = bv.find_next_data(cur + 1, tgt)
+                if n is None or (n - cur) > 1:
+                    cur = cur + len(align)
                     break
+                cur = n
+        else:
+            cur += len(align)
+        if cur > end:
+            break
         if bv.get_basic_blocks_at(cur) == []:
             bv.add_function(cur)
+            bv.update_analysis()
             f = bv.get_function_at(cur)
             if f.name[0:4] == 'sub_':
-                if len(f.low_level_il) < 5:
-                    bv.remove_user_function(f)
+                # if len(f.low_level_il) < 5:
+                #     print "[linsweep] Removing Function At: %s" % f.name
+                #     bv.remove_user_function(f)
+                # else:
+                f.name = f.name + apnd
         cur = bv.find_next_data(cur + 1, tgt)
     if len(bv.functions) > funcs:
         print "[linsweep] %3d functions created using search: %s" % (len(bv.functions) - funcs, tgt.encode('hex'))
 
 
+def find_functions(bv, br, tgts, start, end, apnd=''):
+    for prologue in tgts:
+        for align in alignment:
+            search(bv, br, align, prologue, start, end, apnd)
+        search(bv, br, '', prologue, start, end, apnd)
+
+
 def sweep(bv, mode):
     if bv.arch.name not in supported_archs:
-        print "[linsweep] Arch not supported: %s" % bv.arch.name
+        interaction.show_message_box('Linear Sweep', "Architecture [%s] not currently supported" % bv.arch.name,
+                                     buttons=MessageBoxButtonSet.OKButtonSet, icon=MessageBoxIcon.ErrorIcon)
         return
     fs = len(bv.functions)
     br = BinaryReader(bv)
-    pros = model(bv, br)
     print "[linsweep] Cautious Search Start"
-    for prologue in pros:
-        find_functions(bv, br, prologue)
+    pros = model(bv, br)
+    if '.text' in bv.sections:
+        start = bv.sections['.text'].start
+        end = bv.sections['.text'].end
+    else:
+        start = bv.start
+        end = bv.end
+    find_functions(bv, br, pros, start, end, "-C")
     fsc = len(bv.functions)
     print "[linsweep] Cautious: Found %d New Functions" % (fsc - fs)
     if mode == AGGRESSIVE:
         print "[linsweep] Aggressive Search Start"
-        find_functions(bv, br, "\xcc" * 2, True)
-        for prologue in suggestions:
-            find_functions(bv, br, prologue)
+        find_functions(bv, br, suggestions, bv.start, bv.end, "-A")
+        search(bv, br, align="\xcc"*4, pro='', start=bv.start, end=bv.end, apnd="-P")
         print "[linsweep] Aggressive: Found %d New Functions" % (len(bv.functions) - fsc)
-    print("[linsweep] Totals: Created %d new functions" % (len(bv.functions) - fs))
+    interaction.show_message_box('Linear Sweep', "Created %d new functions" % (len(bv.functions) - fs),
+                                 buttons=MessageBoxButtonSet.OKButtonSet)
 
 
 def sweep_cat(bv):
