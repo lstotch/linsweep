@@ -119,7 +119,6 @@ def sweep_user(bv, addr, size):
     br = BinaryReader(bv)
     br.seek(addr)
     tgt = [br.read(size)]
-    print
     print "[linsweep] User Defined Search Start"
     fs = len(bv.functions)
     find_functions(bv, br, tgt, bv.start, bv.end, "-U")
