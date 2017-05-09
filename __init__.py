@@ -115,6 +115,18 @@ def sweep_agro(bv):
     sweep(bv, AGGRESSIVE)
 
 
-PluginCommand.register("Simple Linear Sweep - Cautious", "Search for function prologues from bv.start", sweep_cat)
+def sweep_user(bv, addr, size):
+    br = BinaryReader(bv)
+    br.seek(addr)
+    tgt = [br.read(size)]
+    print
+    print "[linsweep] User Defined Search Start"
+    fs = len(bv.functions)
+    find_functions(bv, br, tgt, bv.start, bv.end, "-U")
+    print "[linsweep] User: Found %d New Functions" % (len(bv.functions) - fs)
+
+
+PluginCommand.register("Simple Linear Sweep - Cautious", "Search for existing prologues in text section", sweep_cat)
 PluginCommand.register("Simple Linear Sweep - Aggressive", "Search for function prologues from bv.start", sweep_agro)
+PluginCommand.register_for_range("Simple Linear Sweep - User", "Search for selected data as a prologue", sweep_user)
 
