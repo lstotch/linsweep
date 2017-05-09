@@ -123,6 +123,8 @@ def sweep_user(bv, addr, size):
     fs = len(bv.functions)
     find_functions(bv, br, tgt, bv.start, bv.end, "-U")
     print "[linsweep] User: Found %d New Functions" % (len(bv.functions) - fs)
+    interaction.show_message_box('Linear Sweep', "Created %d new functions" % (len(bv.functions) - fs),
+                                 buttons=MessageBoxButtonSet.OKButtonSet)
 
 
 PluginCommand.register("Simple Linear Sweep - Cautious", "Search for existing prologues in text section", sweep_cat)
