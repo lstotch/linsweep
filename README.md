@@ -30,7 +30,7 @@ The selected bytes will be used for a prologue search.
 
 ![Select](screenshots/3.png)
 
-## Instalation:
+## Installation:
 
 To install this plugin, navigate to your Binary Ninja plugins directory, and run
 
