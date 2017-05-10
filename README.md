@@ -5,7 +5,9 @@ _A simple linear sweep for x86 and x86_64._
 
 ## Description:
 
-This plugin is a temporary solution until a linear sweep is included in core. It identifies functions by searching for common prologues and makes an attempt to avoid some false positives by analysing the created function. 
+This plugin is a temporary solution until a linear sweep is included in core. It identifies functions by searching for common prologues and makes an attempt to avoid some false positives by analysing the created function.
+
+The plugin will certainly have false positives, primarily during Aggressive mode by it will occasionally define the start of a function a few instructions beyond the start. The start may be missed entirely or may be identified by a later prologue suggestion. Due to the awesome feature of Binary Ninja which allows for overlapping functions, this is not a much as a problem as with other tools.
 
 There are three modes, Cautious, Aggressive and User.
 
@@ -13,7 +15,7 @@ There are three modes, Cautious, Aggressive and User.
 Analyzes the first 3 bytes of all existing functions and then uses the most common values as prologues for additional function searching within the bounds of the .text section, if it is defined.
 
 #### Aggressive:
-Performs the Cautious analysis and also searches the entire binary for a list of common prologues.
+Performs the Cautious analysis and also searches the entire binary for a list of common prologues for the architecture.
  
 #### User:
 If during analysis you want to search for a specific prologue only, switch to the hex editor at the appropriate location.

@@ -3,27 +3,45 @@ from binaryninja import *
 
 
 logging.disable(logging.WARNING)
-supported_archs = ['x86', 'x86_64']
 alignment = ["\xcc", "\xc3"]
-suggestions = ["\x55\x8b\xec",
-               "\x40\x55\x48\x83\xec",
-               "\x64\x48\x8b",
-               "\x8b\xff\x56",
-               "\x8b\xff\x55",
-               "\xff\x25",
-               "\x48\x8b\xc4",
-               "\x48\x83\xec",
-               "\x48\x81\xec",
-               "\x8b\x54\x24\x04",
-               "\x8b\x4c\x24\x04"]
+suggestions = {"x86": ["\x55\x8b\xec",
+                       "\x55\x89\xe5",
+                       "\xff\x25",
+                       "\x6a\x00\x68",
+                       "\x55\x8b\x4c\x24",
+                       "\x56\x8b\x4c\x24",
+                       "\x8b\x4c\x24",
+                       "\x55\x8b\x44\x24",
+                       "\x56\x8b\x44\x24",
+                       "\x8b\x44\x24",
+                       "\x55\x8b\x54\x24",
+                       "\x56\x8b\x54\x24",
+                       "\x8b\x54\x24",
+                       "\x8b\xff\x56",
+                       "\x8b\xff\x55",
+                       "\x51\x53\x8b\x1d",
+                       "\x83\xec"],
+              "x86_64": ["\x55\x48\x89\xe5",
+                         "\x40\x53\x55\x56\x57\x41\x54\x41\x55\x41\x56\x48\x83\xec",
+                         "\x40\x53\x55\x56\x57\x48\x83\xec",
+                         "\x40\x53\x56\x57\x48\x83\xec",
+                         "\x40\x53\x57\x48\x83\xec",
+                         "\x40\x53\x48\x83\xec",
+                         "\x40\x55\x48\x83\xec",
+                         "\x48\x83\xec",
+                         "\x48\x89\x5c",
+                         "\x48\x8b\xc4",
+                         "\x48\x81\xec",
+                         "\x64\x48\x8b"]}
 MIN_PRO_COUNT = 8
 MIN_IL = 10
 CAUTIOUS = 0
 AGGRESSIVE = 1
 
 
-def model(bv, br):
+def model(bv):
     pros = {}
+    br = BinaryReader(bv)
     for f in bv.functions:
         if len(f.low_level_il) < MIN_IL:
             continue
@@ -42,7 +60,7 @@ def model(bv, br):
     return ret
 
 
-def search(bv, br, align, pro, start, end, apnd=''):
+def search(bv, align, pro, start, end, apnd=''):
     tgt = align + pro
     cur = bv.find_next_data(start, tgt)
     funcs = len(bv.functions)
@@ -73,35 +91,34 @@ def search(bv, br, align, pro, start, end, apnd=''):
         print "[linsweep] %3d functions created using search: %s" % (len(bv.functions) - funcs, tgt.encode('hex'))
 
 
-def find_functions(bv, br, tgts, start, end, apnd=''):
+def find_functions(bv, tgts, start, end, apnd=''):
     for prologue in tgts:
         for align in alignment:
-            search(bv, br, align, prologue, start, end, apnd)
-        search(bv, br, '', prologue, start, end, apnd)
+            search(bv, align, prologue, start, end, apnd)
+        search(bv, '', prologue, start, end, apnd)
 
 
 def sweep(bv, mode):
-    if bv.arch.name not in supported_archs:
+    if bv.arch.name not in suggestions.keys():
         interaction.show_message_box('Linear Sweep', "Architecture [%s] not currently supported" % bv.arch.name,
                                      buttons=MessageBoxButtonSet.OKButtonSet, icon=MessageBoxIcon.ErrorIcon)
         return
     fs = len(bv.functions)
-    br = BinaryReader(bv)
     print "[linsweep] Cautious Search Start"
-    pros = model(bv, br)
+    pros = model(bv)
     if '.text' in bv.sections:
         start = bv.sections['.text'].start
         end = bv.sections['.text'].end
     else:
         start = bv.start
         end = bv.end
-    find_functions(bv, br, pros, start, end, "-C")
+    find_functions(bv, pros, start, end, "-C")
     fsc = len(bv.functions)
     print "[linsweep] Cautious: Found %d New Functions" % (fsc - fs)
     if mode == AGGRESSIVE:
         print "[linsweep] Aggressive Search Start"
-        find_functions(bv, br, suggestions, bv.start, bv.end, "-A")
-        search(bv, br, align="\xcc"*4, pro='', start=bv.start, end=bv.end, apnd="-P")
+        find_functions(bv, suggestions[bv.arch.name], bv.start, bv.end, "-A")
+        search(bv, align="\xcc"*4, pro='', start=bv.start, end=bv.end, apnd="-P")
         print "[linsweep] Aggressive: Found %d New Functions" % (len(bv.functions) - fsc)
     interaction.show_message_box('Linear Sweep', "Created %d new functions" % (len(bv.functions) - fs),
                                  buttons=MessageBoxButtonSet.OKButtonSet)
@@ -121,7 +138,7 @@ def sweep_user(bv, addr, size):
     tgt = [br.read(size)]
     print "[linsweep] User Defined Search Start"
     fs = len(bv.functions)
-    find_functions(bv, br, tgt, bv.start, bv.end, "-U")
+    find_functions(bv, tgt, bv.start, bv.end, "-U")
     print "[linsweep] User: Found %d New Functions" % (len(bv.functions) - fs)
     interaction.show_message_box('Linear Sweep', "Created %d new functions" % (len(bv.functions) - fs),
                                  buttons=MessageBoxButtonSet.OKButtonSet)
