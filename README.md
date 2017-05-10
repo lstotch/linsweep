@@ -7,7 +7,7 @@ _A simple linear sweep for x86 and x86_64._
 
 This plugin is a temporary solution until a linear sweep is included in core. It identifies functions by searching for common prologues and makes an attempt to avoid some false positives by analysing the created function.
 
-The plugin will certainly have false positives, primarily during Aggressive mode by it will occasionally define the start of a function a few instructions beyond the start. The start may be missed entirely or may be identified by a later prologue suggestion. Due to the awesome feature of Binary Ninja which allows for overlapping functions, this is not a much as a problem as with other tools.
+The plugin will certainly have false positives, primarily during Aggressive mode when it will occasionally define the start of a function a few instructions beyond the start. The start may be missed entirely or may be identified by a later prologue suggestion. Due to the awesome feature of Binary Ninja which allows for overlapping functions, this is not a much as a problem as with other tools.
 
 There are three modes, Cautious, Aggressive and User.
 
