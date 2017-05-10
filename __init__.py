@@ -32,7 +32,8 @@ suggestions = {"x86": ["\x55\x8b\xec",
                          "\x48\x89\x5c",
                          "\x48\x8b\xc4",
                          "\x48\x81\xec",
-                         "\x64\x48\x8b"]}
+                         "\x64\x48\x8b",
+                         "\xff\x25"]}
 MIN_PRO_COUNT = 8
 MIN_IL = 10
 CAUTIOUS = 0
